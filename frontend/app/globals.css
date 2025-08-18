@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(37,99,235,0.10), transparent 60%),
+    radial-gradient(1000px 500px at 120% 10%, rgba(29,78,216,0.10), transparent 60%),
+    linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
+    rgb(var(--background-start-rgb));
+  font-family: 'Inter', sans-serif;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-medium py-2 px-4 rounded-xl shadow-sm hover:shadow md:transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-gray-800 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 font-medium py-2 px-4 rounded-xl transition-colors duration-200 shadow-sm;
+  }
+  
+  .card {
+    @apply bg-white/90 backdrop-blur rounded-2xl shadow-md hover:shadow-lg border border-gray-200/70 p-6 transition-shadow duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+
+  .chip {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100;
+  }
+}
+
+/* Subtle fade-in animation for content blocks */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeInUp 0.35s ease-out both;
+}

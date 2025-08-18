@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  adobe-hackathon-finale:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Development service (optional)
+  adobe-hackathon-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/frontend
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=development
+    command: >
+      sh -c "
+        cd frontend && npm install &&
+        npm run dev &
+        cd /app &&
+        uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    profiles:
+      - dev
