@@ -1,29 +1,75 @@
 import axios from 'axios'
 
-// Configure axios base URL
+// Configure axios base URL - use direct backend URL for now
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:8000', // Direct backend URL
   timeout: 120000, // 2 minutes timeout for PDF processing
 })
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url, config.data ? 'with data' : 'no data')
+    return config
+  },
+  (error) => {
+    console.error('API Request Error:', error)
+    return Promise.reject(error)
+  }
+)
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url)
+    return response
+  },
+  (error) => {
+    console.error('API Response Error:', error.response?.status, error.response?.data, error.message)
+    return Promise.reject(error)
+  }
+)
 
 // Upload multiple PDFs
 export const uploadPDFs = async (files) => {
   try {
+    console.log('Starting upload for', files.length, 'files')
+    
     const formData = new FormData()
     files.forEach(file => {
       formData.append('files', file)
+      console.log('Added file to FormData:', file.name, file.size, 'bytes')
     })
 
     const response = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 300000, // 5 minutes for large files
     })
 
+    console.log('Upload successful:', response.data)
     return response.data
   } catch (error) {
     console.error('Upload API error:', error)
-    throw new Error(error.response?.data?.detail || 'Upload failed')
+    
+    if (error.code === 'ECONNREFUSED') {
+      throw new Error('Backend server is not running. Please start the backend server.')
+    }
+    
+    if (error.code === 'ERR_NETWORK') {
+      throw new Error('Network error. Please check your connection and ensure the backend is running.')
+    }
+    
+    if (error.response?.status === 413) {
+      throw new Error('File too large. Please try a smaller PDF file.')
+    }
+    
+    if (error.response?.status === 500) {
+      throw new Error(`Server error: ${error.response.data?.detail || 'Unknown server error'}`)
+    }
+    
+    throw new Error(error.response?.data?.detail || `Upload failed: ${error.message}`)
   }
 }
 

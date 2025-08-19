@@ -25,6 +25,21 @@ export default function Home() {
       const pdfFiles = acceptedFiles.filter(file => file.name.toLowerCase().endsWith('.pdf'))
       if (pdfFiles.length === 0) return
 
+      console.log('Attempting to upload', pdfFiles.length, 'PDF files')
+      
+      // Test backend connection first
+      try {
+        const healthResponse = await fetch('http://localhost:8000/health')
+        if (!healthResponse.ok) {
+          throw new Error(`Backend health check failed: ${healthResponse.status}`)
+        }
+        console.log('Backend connection successful')
+      } catch (healthError) {
+        console.error('Backend connection failed:', healthError)
+        alert('Cannot connect to backend server. Please ensure the backend is running on http://localhost:8000')
+        return
+      }
+
       const result = await uploadPDFs(pdfFiles)
       setUploadedDocuments(prev => [...prev, ...result.files])
       
@@ -32,7 +47,17 @@ export default function Home() {
       setActiveTab('viewer')
     } catch (error) {
       console.error('Upload failed:', error)
-      alert('Upload failed. Please try again.')
+      
+      // Show more specific error messages
+      if (error.message.includes('Backend server is not running')) {
+        alert('Backend server is not running. Please start the backend server first.')
+      } else if (error.message.includes('Network error')) {
+        alert('Network connection error. Please check your internet connection and ensure the backend is running.')
+      } else if (error.message.includes('File too large')) {
+        alert('The PDF file is too large. Please try a smaller file.')
+      } else {
+        alert(`Upload failed: ${error.message}`)
+      }
     }
   }, [])
 
