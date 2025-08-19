@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List, Optional
 import uvicorn
 from pdf_processor import PDFProcessor
+from chat_with_llm import chat_with_llm
 from dotenv import load_dotenv
 
 # Load environment variables from a local .env if present (useful for local/dev)
@@ -49,22 +50,69 @@ async def root():
 async def health_check():
     return {"status": "healthy", "service": "PDF Intelligence Engine"}
 
-@app.post("/upload")
-async def upload_pdfs(files: List[UploadFile] = File(...)):
-    """Upload multiple PDFs for analysis and storage"""
+@app.post("/upload-simple")
+async def upload_pdfs_simple(files: List[UploadFile] = File(...)):
+    """Upload multiple PDFs without processing (for testing)"""
     try:
+        print(f"Simple upload of {len(files)} files...")
         uploaded_files = []
-        for file in files:
+        
+        for i, file in enumerate(files):
             if not file.filename.lower().endswith('.pdf'):
                 continue
+            
+            print(f"Saving file {i+1}/{len(files)}: {file.filename}")
             
             # Save file
             file_path = UPLOAD_DIR / file.filename
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             
+            uploaded_files.append({
+                "filename": file.filename,
+                "size_bytes": file_path.stat().st_size,
+                "status": "saved"
+            })
+        
+        return {
+            "message": f"Successfully saved {len(uploaded_files)} PDFs",
+            "files": uploaded_files
+        }
+    
+    except Exception as e:
+        print(f"Simple upload failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+@app.post("/upload")
+async def upload_pdfs(files: List[UploadFile] = File(...)):
+    """Upload multiple PDFs for analysis and storage"""
+    try:
+        print(f"Starting upload of {len(files)} files...")
+        uploaded_files = []
+        
+        for i, file in enumerate(files):
+            if not file.filename.lower().endswith('.pdf'):
+                print(f"Skipping non-PDF file: {file.filename}")
+                continue
+            
+            print(f"Processing file {i+1}/{len(files)}: {file.filename}")
+            
+            # Save file
+            file_path = UPLOAD_DIR / file.filename
+            print(f"Saving file to {file_path}")
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            print(f"File saved, size: {file_path.stat().st_size} bytes")
+            
             # Process the PDF to extract sections
-            sections = pdf_processor.extract_sections(str(file_path))
+            print(f"Extracting sections from {file.filename}...")
+            try:
+                sections = pdf_processor.extract_sections(str(file_path))
+                print(f"Extracted {len(sections)} sections from {file.filename}")
+            except Exception as e:
+                print(f"Error extracting sections from {file.filename}: {e}")
+                sections = []
             
             # Save processed data
             processed_data = {
@@ -82,13 +130,17 @@ async def upload_pdfs(files: List[UploadFile] = File(...)):
                 "sections_count": len(sections),
                 "status": "processed"
             })
+            
+            print(f"Completed processing {file.filename}")
         
+        print(f"Upload completed successfully. Processed {len(uploaded_files)} files.")
         return {
             "message": f"Successfully uploaded {len(uploaded_files)} PDFs",
             "files": uploaded_files
         }
     
     except Exception as e:
+        print(f"Upload failed with error: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @app.get("/documents")
@@ -215,6 +267,44 @@ async def get_config():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get config: {str(e)}")
 
+
+@app.post("/chat")
+async def chat_with_documents(payload: dict):
+    """Chat with LLM about uploaded documents and selected content."""
+    try:
+        messages = payload.get("messages", [])
+        selected_text = payload.get("selected_text", "")
+        document_context = payload.get("document_context", "")
+        
+        if not messages:
+            raise HTTPException(status_code=400, detail="messages are required")
+        
+        # Build system context from documents
+        system_context = "You are an AI assistant helping with document analysis. "
+        if document_context:
+            system_context += f"Current document context: {document_context}. "
+        if selected_text:
+            system_context += f"Selected text: {selected_text}. "
+        system_context += "Provide helpful, concise responses based on the document content."
+        
+        # Prepare messages for LLM
+        llm_messages = [{"role": "system", "content": system_context}] + messages
+        
+        # Get response from LLM
+        response = chat_with_llm(llm_messages)
+        
+        return {
+            "response": response,
+            "context": {
+                "selected_text": selected_text,
+                "document_context": document_context
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
 
 @app.post("/insights")
 async def generate_insights(payload: dict):

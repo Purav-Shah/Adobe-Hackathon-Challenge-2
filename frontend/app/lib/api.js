@@ -30,6 +30,49 @@ api.interceptors.response.use(
   }
 )
 
+// Upload multiple PDFs (simple version - no processing)
+export const uploadPDFsSimple = async (files) => {
+  try {
+    console.log('Starting simple upload for', files.length, 'files')
+    
+    const formData = new FormData()
+    files.forEach(file => {
+      formData.append('files', file)
+      console.log('Added file to FormData:', file.name, file.size, 'bytes')
+    })
+
+    const response = await api.post('/upload-simple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 1 minute timeout
+    })
+
+    console.log('Simple upload successful:', response.data)
+    return response.data
+  } catch (error) {
+    console.error('Simple upload API error:', error)
+    
+    if (error.code === 'ECONNREFUSED') {
+      throw new Error('Backend server is not running. Please start the backend server.')
+    }
+    
+    if (error.code === 'ERR_NETWORK') {
+      throw new Error('Network error. Please check your connection and ensure the backend is running.')
+    }
+    
+    if (error.response?.status === 413) {
+      throw new Error('File too large. Please try a smaller PDF file.')
+    }
+    
+    if (error.response?.status === 500) {
+      throw new Error(`Server error: ${error.response.data?.detail || 'Unknown server error'}`)
+    }
+    
+    throw new Error(error.response?.data?.detail || `Upload failed: ${error.message}`)
+  }
+}
+
 // Upload multiple PDFs
 export const uploadPDFs = async (files) => {
   try {
@@ -110,10 +153,19 @@ export const getRelatedSections = async (documentName, sectionText = null) => {
 // Get related sections from all documents for current document
 export const getRelatedSectionsForCurrent = async (currentDocumentName) => {
   try {
-    const response = await api.get(`/related-for-document/${currentDocumentName}`)
+    const response = await api.get(`/related-for-document/${currentDocumentName}`, {
+      timeout: 30000 // 30 seconds instead of 2 minutes
+    })
     return response.data
   } catch (error) {
     console.error('Get related sections for current error:', error)
+    
+    // If timeout, return empty result instead of throwing
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      console.warn('Related sections request timed out, returning empty result')
+      return { related_sections: [] }
+    }
+    
     throw new Error('Failed to get related sections')
   }
 }
@@ -148,6 +200,21 @@ export const getInsights = async (selectedText, topK = 5) => {
   } catch (error) {
     console.error('Insights API error:', error)
     throw new Error(error.response?.data?.detail || 'Failed to generate insights')
+  }
+}
+
+// Chat with LLM about documents
+export const chatWithLLM = async (messages, selectedText = "", documentContext = "") => {
+  try {
+    const response = await api.post('/chat', { 
+      messages, 
+      selected_text: selectedText, 
+      document_context: documentContext 
+    })
+    return response.data
+  } catch (error) {
+    console.error('Chat API error:', error)
+    throw new Error(error.response?.data?.detail || 'Chat failed')
   }
 }
 

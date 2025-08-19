@@ -2,10 +2,14 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Search, BookOpen, X, ChevronRight } from 'lucide-react'
+import { Upload, FileText, Search, BookOpen, X, ChevronRight, Hash, Library } from 'lucide-react'
 import PDFViewer from './components/PDFViewer'
 import RelatedSections from './components/RelatedSections'
-import { uploadPDFs, getDocumentSections, getRelatedSectionsForCurrent, getInsights, generateAudio } from './lib/api'
+import ChatInterface from './components/ChatInterface'
+import EnhancedInsights from './components/EnhancedInsights'
+import PDFSwitcher from './components/PDFSwitcher'
+import UnifiedSectionsBrowser from './components/UnifiedSectionsBrowser'
+import { uploadPDFs, uploadPDFsSimple, getDocumentSections, getRelatedSectionsForCurrent, getInsights, generateAudio } from './lib/api'
 
 export default function Home() {
   const [uploadedDocuments, setUploadedDocuments] = useState([])
@@ -40,11 +44,18 @@ export default function Home() {
         return
       }
 
-      const result = await uploadPDFs(pdfFiles)
+      // Use simple upload first for testing (no PDF processing)
+      console.log('Using simple upload for testing...')
+      const result = await uploadPDFsSimple(pdfFiles)
       setUploadedDocuments(prev => [...prev, ...result.files])
       
-      // Switch to viewer tab after successful upload
-      setActiveTab('viewer')
+      // Automatically switch to viewer tab and load the first PDF
+      if (result.files.length > 0) {
+        setActiveTab('viewer')
+        // Load the first uploaded PDF to show its sections
+        const firstFile = acceptedFiles[0]
+        handleCurrentPDFChange(firstFile)
+      }
     } catch (error) {
       console.error('Upload failed:', error)
       
@@ -94,6 +105,9 @@ export default function Home() {
       const relatedResult = await getRelatedSectionsForCurrent(filename)
       setRelatedSections(relatedResult.related_sections || [])
       
+      // Switch to viewer tab when changing PDFs
+      setActiveTab('viewer')
+      
     } catch (error) {
       console.error('Analysis failed:', error)
       alert('PDF analysis failed. Please try again.')
@@ -133,6 +147,17 @@ export default function Home() {
       setActiveTab('viewer')
     } catch (e) {
       console.error('Navigate failed:', e)
+    }
+  }
+
+  const handlePDFSwitch = async (doc) => {
+    try {
+      // Create a file object from the document info
+      const file = new File([], doc.filename, { type: 'application/pdf' })
+      await handleCurrentPDFChange(file)
+    } catch (e) {
+      console.error('PDF switch failed:', e)
+      alert('Failed to switch to the selected PDF. Please try again.')
     }
   }
 
@@ -193,6 +218,17 @@ export default function Home() {
             <FileText className="inline-block w-4 h-4 mr-2" />
             PDF Viewer
           </button>
+          <button
+            onClick={() => setActiveTab('sections')}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'sections'
+                ? 'bg-red-900 text-white shadow border border-red-700'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <Hash className="inline-block w-4 h-4 mr-2" />
+            All Sections
+          </button>
         </div>
 
         {/* Upload Tab */}
@@ -234,6 +270,21 @@ export default function Home() {
                 <h3 className="text-lg font-semibold text-white mb-4">
                   Uploaded Documents ({uploadedDocuments.length})
                 </h3>
+                
+                {/* Sections Summary */}
+                <div className="mb-4 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+                  <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
+                    <FileText className="h-4 w-4" />
+                    <span>Sections Summary</span>
+                  </h4>
+                  <div className="text-xs text-gray-400">
+                    <p>Total sections extracted: <span className="text-white font-medium">
+                      {uploadedDocuments.reduce((total, doc) => total + (doc.sections_count || 0), 0)}
+                    </span></p>
+                    <p>Documents processed: <span className="text-white font-medium">{uploadedDocuments.length}</span></p>
+                  </div>
+                </div>
+                
                 <div className="space-y-3">
                   {uploadedDocuments.map((doc, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-700 rounded-xl">
@@ -241,14 +292,57 @@ export default function Home() {
                         <FileText className="h-5 w-5 text-gray-400 mr-3" />
                         <div>
                           <p className="text-sm font-medium text-white">{doc.filename}</p>
-                          <p className="text-xs text-gray-400">{doc.sections_count} sections extracted</p>
+                          <p className="text-xs text-gray-500">{doc.sections_count} sections extracted</p>
                         </div>
                       </div>
-                      <span className="chip bg-green-900/50 text-green-300 border-green-700">
-                        {doc.status}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="chip bg-green-900/50 text-green-300 border-green-700">
+                          {doc.status}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setActiveTab('viewer')
+                            // Find the file object to load
+                            const fileInput = document.getElementById('pdf-upload')
+                            if (fileInput && fileInput.files.length > 0) {
+                              handleCurrentPDFChange(fileInput.files[0])
+                            }
+                          }}
+                          className="text-xs text-adobe-red hover:text-red-400 hover:underline"
+                        >
+                          View Sections
+                        </button>
+                      </div>
                     </div>
                   ))}
+                </div>
+                
+                {/* Quick Actions */}
+                <div className="mt-4 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">Quick Actions:</h4>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setActiveTab('viewer')}
+                      className="text-xs bg-adobe-red text-white px-3 py-1 rounded hover:bg-red-700 transition-colors"
+                    >
+                      Go to PDF Viewer
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('sections')}
+                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Browse All Sections
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Refresh sections for all documents
+                        console.log('Refreshing sections for all documents...')
+                      }}
+                      className="text-xs bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500 transition-colors"
+                    >
+                      Refresh Sections
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -330,40 +424,90 @@ export default function Home() {
 
             {/* Related Sections Sidebar */}
             <div className="lg:col-span-1 space-y-6">
+              <PDFSwitcher
+                uploadedDocuments={uploadedDocuments}
+                currentPDF={currentPDF}
+                onPDFSelect={handlePDFSwitch}
+                onSectionClick={(section, doc) => {
+                  // Navigate to the section in the PDF
+                  setCurrentPDF({ name: doc.filename })
+                  setCurrentPDFUrl(`/files/${encodeURIComponent(doc.filename)}`)
+                  setTargetPage(section.page + 1)
+                }}
+                className="mb-4"
+              />
+
               <RelatedSections 
                 relatedSections={relatedSections}
                 uploadedDocuments={uploadedDocuments}
                 onJump={handleRelatedJump}
               />
 
-              <div className="card fade-in">
-                <h3 className="text-lg font-semibold text-white mb-2">Insights</h3>
-                {!selectedText && (
-                  <p className="text-sm text-gray-300">Select text in the PDF to see insights.</p>
-                )}
-                {selectedText && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-200"><span className="font-medium">Selected:</span> {selectedText.slice(0, 180)}{selectedText.length>180?'…':''}</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {insights.map((i, idx) => (
-                        <li key={idx} className="text-sm text-gray-200">
-                          <span className="font-medium capitalize">{i.type}:</span> {i.text}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex items-center space-x-2 pt-2">
-                      <button onClick={handleGenerateAudio} className="btn-primary">Generate Audio Overview</button>
-                      {audioUrl && (
-                        <audio controls src={audioUrl} className="w-full" />
-                      )}
-                    </div>
-                  </div>
-                )}
+              <EnhancedInsights 
+                selectedText={selectedText}
+                onGenerateAudio={setAudioUrl}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Sections Tab */}
+        {activeTab === 'sections' && (
+          <div className="space-y-6">
+            <div className="card fade-in">
+              <h2 className="text-lg font-semibold text-white mb-4">
+                Browse All Document Sections
+              </h2>
+              <p className="text-gray-300 mb-6">
+                Explore and search through all sections from all uploaded documents. 
+                Find specific content, switch between PDFs, and navigate to relevant sections.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* PDF Switcher */}
+              <div className="lg:col-span-1">
+                <PDFSwitcher
+                  uploadedDocuments={uploadedDocuments}
+                  currentPDF={currentPDF}
+                  onPDFSelect={handlePDFSwitch}
+                  onSectionClick={(section, doc) => {
+                    // Navigate to the section in the PDF
+                    setCurrentPDF({ name: doc.filename })
+                    setCurrentPDFUrl(`/files/${encodeURIComponent(doc.filename)}`)
+                    setTargetPage(section.page + 1)
+                    setActiveTab('viewer')
+                  }}
+                />
+              </div>
+
+              {/* Unified Sections Browser */}
+              <div className="lg:col-span-2">
+                <UnifiedSectionsBrowser
+                  uploadedDocuments={uploadedDocuments}
+                  onSectionClick={(section) => {
+                    // Navigate to the section in the PDF
+                    const doc = uploadedDocuments.find(d => d.filename === section.documentName)
+                    if (doc) {
+                      setCurrentPDF({ name: doc.filename })
+                      setCurrentPDFUrl(`/files/${encodeURIComponent(doc.filename)}`)
+                      setTargetPage(section.page + 1)
+                      setActiveTab('viewer')
+                    }
+                  }}
+                  onPDFSwitch={handlePDFSwitch}
+                />
               </div>
             </div>
           </div>
         )}
       </main>
+      
+      {/* AI Chat Interface */}
+      <ChatInterface 
+        selectedText={selectedText}
+        documentContext={currentPDF?.name || ''}
+      />
     </div>
   )
 }
