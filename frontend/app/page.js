@@ -124,18 +124,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-adobe-black text-white border-b-4 border-adobe-red sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-primary-600" />
-              <h1 className="ml-3 text-xl font-semibold text-gray-900">
+              <BookOpen className="h-8 w-8 text-adobe-red" />
+              <h1 className="ml-3 text-xl font-semibold text-white">
                 Adobe Hackathon Finale
               </h1>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-300">
               Intelligent PDF Reading Application
             </div>
           </div>
@@ -145,13 +145,13 @@ export default function Home() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-white/70 backdrop-blur p-1 rounded-xl mb-8 border border-gray-200 shadow-sm">
+        <div className="flex space-x-1 bg-gray-800/80 backdrop-blur p-1 rounded-xl mb-8 border border-gray-700 shadow-sm">
           <button
             onClick={() => setActiveTab('upload')}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'upload'
-                ? 'bg-gradient-to-r from-primary-50 to-white text-gray-900 shadow'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-red-900 text-white shadow border border-red-700'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
             }`}
           >
             <Upload className="inline-block w-4 h-4 mr-2" />
@@ -161,8 +161,8 @@ export default function Home() {
             onClick={() => setActiveTab('viewer')}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'viewer'
-                ? 'bg-gradient-to-r from-primary-50 to-white text-gray-900 shadow'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-red-900 text-white shadow border border-red-700'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
             }`}
           >
             <FileText className="inline-block w-4 h-4 mr-2" />
@@ -174,10 +174,10 @@ export default function Home() {
         {activeTab === 'upload' && (
           <div className="space-y-6">
             <div className="card fade-in">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-white mb-4">
                 Upload Your PDF Documents
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-300 mb-6">
                 Upload multiple PDFs to represent documents you've read in the past. 
                 These will be analyzed to find related content when you read new documents.
               </p>
@@ -186,18 +186,18 @@ export default function Home() {
                 {...getRootProps()}
                 className={`border-2 border-dashed rounded-2xl p-10 text-center transition-colors ${
                   isDragActive
-                    ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-300 hover:border-gray-400 bg-white/50'
+                    ? 'border-adobe-red bg-red-900/20'
+                    : 'border-gray-500 hover:border-adobe-red bg-gray-800/50'
                 }`}
               >
                 <input {...getInputProps()} />
-                <Upload className="mx-auto h-12 w-12 text-primary-500" />
-                <p className="mt-4 text-sm text-gray-600">
+                <Upload className="mx-auto h-12 w-12 text-adobe-red" />
+                <p className="mt-4 text-sm text-gray-300">
                   {isDragActive
                     ? 'Drop the PDFs here...'
                     : 'Drag and drop PDF files here, or click to select files'}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-gray-400">
                   Supports multiple PDF files
                 </p>
               </div>
@@ -206,20 +206,20 @@ export default function Home() {
             {/* Uploaded Documents List */}
             {uploadedDocuments.length > 0 && (
               <div className="card fade-in">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4">
                   Uploaded Documents ({uploadedDocuments.length})
                 </h3>
                 <div className="space-y-3">
                   {uploadedDocuments.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-700 rounded-xl">
                       <div className="flex items-center">
                         <FileText className="h-5 w-5 text-gray-400 mr-3" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{doc.filename}</p>
-                          <p className="text-xs text-gray-500">{doc.sections_count} sections extracted</p>
+                          <p className="text-sm font-medium text-white">{doc.filename}</p>
+                          <p className="text-xs text-gray-400">{doc.sections_count} sections extracted</p>
                         </div>
                       </div>
-                      <span className="chip bg-green-50 text-green-700 border-green-100">
+                      <span className="chip bg-green-900/50 text-green-300 border-green-700">
                         {doc.status}
                       </span>
                     </div>
@@ -237,7 +237,7 @@ export default function Home() {
             <div className="lg:col-span-2">
               <div className="card fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">PDF Viewer</h2>
+                  <h2 className="text-lg font-semibold text-white">PDF Viewer</h2>
                   <div className="flex space-x-2">
                     <input
                       type="file"
@@ -257,7 +257,7 @@ export default function Home() {
 
                 {currentPDF ? (
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-300">
                       <FileText className="h-4 w-4" />
                       <span>{currentPDF.name}</span>
                       {isAnalyzing && (
@@ -272,7 +272,7 @@ export default function Home() {
                     {/* Current Document Sections */}
                     {currentSections.length > 0 && (
                       <div className="mt-6">
-                        <h3 className="text-md font-semibold text-gray-900 mb-3">
+                        <h3 className="text-md font-semibold text-white mb-3">
                           Document Sections
                         </h3>
                         <div className="space-y-2">
@@ -280,11 +280,11 @@ export default function Home() {
                             <div
                               key={index}
                               onClick={() => handleSectionClick(section)}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
+                              className="flex items-center justify-between p-3 bg-gray-700 rounded-xl cursor-pointer hover:bg-gray-600 transition-colors border border-gray-600 hover:border-red-500"
                             >
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{section.title}</p>
-                                <p className="text-xs text-gray-500">Page {section.page + 1}</p>
+                                <p className="text-sm font-medium text-white">{section.title}</p>
+                                <p className="text-xs text-gray-400">Page {section.page + 1}</p>
                               </div>
                               <ChevronRight className="h-4 w-4 text-gray-400" />
                             </div>
@@ -295,9 +295,9 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-4 text-gray-600">No PDF selected</p>
-                    <p className="text-sm text-gray-500">Upload a PDF to start reading</p>
+                    <FileText className="mx-auto h-12 w-12 text-gray-500" />
+                    <p className="mt-4 text-gray-300">No PDF selected</p>
+                    <p className="text-sm text-gray-400">Upload a PDF to start reading</p>
                   </div>
                 )}
               </div>
@@ -312,16 +312,16 @@ export default function Home() {
               />
 
               <div className="card fade-in">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Insights</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Insights</h3>
                 {!selectedText && (
-                  <p className="text-sm text-gray-600">Select text in the PDF to see insights.</p>
+                  <p className="text-sm text-gray-300">Select text in the PDF to see insights.</p>
                 )}
                 {selectedText && (
                   <div className="space-y-3">
-                    <p className="text-sm text-gray-700"><span className="font-medium">Selected:</span> {selectedText.slice(0, 180)}{selectedText.length>180?'…':''}</p>
+                    <p className="text-sm text-gray-200"><span className="font-medium">Selected:</span> {selectedText.slice(0, 180)}{selectedText.length>180?'…':''}</p>
                     <ul className="list-disc pl-5 space-y-1">
                       {insights.map((i, idx) => (
-                        <li key={idx} className="text-sm text-gray-700">
+                        <li key={idx} className="text-sm text-gray-200">
                           <span className="font-medium capitalize">{i.type}:</span> {i.text}
                         </li>
                       ))}

@@ -3,6 +3,10 @@ node_modules/
 __pycache__/
 *.py[cod]
 *$py.class
+venv/
+env/
+.venv/
+.env/
 
 # Build outputs
 .next/
@@ -44,3 +48,4 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+

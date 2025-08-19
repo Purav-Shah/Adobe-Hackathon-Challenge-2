@@ -199,10 +199,10 @@ const PDFViewer = ({ pdfUrl, onTextSelected, targetPage }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+      <div className="flex items-center justify-center h-64 bg-gray-800 rounded-lg">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading PDF viewer...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-adobe-red mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading PDF viewer...</p>
         </div>
       </div>
     )
@@ -210,14 +210,14 @@ const PDFViewer = ({ pdfUrl, onTextSelected, targetPage }) => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+      <div className="flex items-center justify-center h-64 bg-gray-800 rounded-lg">
         <div className="text-center">
-          <p className="text-red-500 mb-2">PDF Viewer Error</p>
-          <p className="text-sm text-gray-600 mb-4">{error}</p>
+          <p className="text-adobe-red mb-2">PDF Viewer Error</p>
+          <p className="text-sm text-gray-300 mb-4">{error}</p>
           <div className="space-y-2">
             <button 
               onClick={() => setUseFallback(true)}
-              className="text-blue-500 hover:underline block"
+              className="text-adobe-red hover:underline block"
             >
               Use Browser PDF Viewer
             </button>
@@ -225,13 +225,13 @@ const PDFViewer = ({ pdfUrl, onTextSelected, targetPage }) => {
               href={pdfUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-green-500 hover:underline block"
+              className="text-green-400 hover:underline block"
             >
               Open PDF in new tab
             </a>
             <button 
               onClick={() => window.location.reload()}
-              className="text-purple-500 hover:underline block"
+              className="text-purple-400 hover:underline block"
             >
               Retry Adobe viewer
             </button>
@@ -246,7 +246,7 @@ const PDFViewer = ({ pdfUrl, onTextSelected, targetPage }) => {
       <div 
         id="adobe-dc-view" 
         ref={viewerRef}
-        className="w-full h-full min-h-[600px] border border-gray-300 rounded-lg"
+        className="w-full h-full min-h-[600px] border border-gray-600 rounded-lg"
       />
     </div>
   )
